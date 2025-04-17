@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi QR Code Generator & Status</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        .container { width: 400px; margin: auto; }
+        input, button { width: 100%; padding: 10px; margin: 10px 0; }
+        img { margin-top: 20px; width: 200px; height: 200px; }
+        .status-box { 
+            margin-top: 20px; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+            display: inline-block; 
+            background-color: #f9f9f9; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WiFi QR Code Generator & Status</h1>
+
+        <!-- WiFi Credentials Input -->
+        <label for="ssid">WiFi SSID:</label>
+        <input type="text" id="ssid" placeholder="Enter WiFi SSID">
+
+        <label for="password">WiFi Password:</label>
+        <input type="password" id="password" placeholder="Enter WiFi Password">
+        <button onclick="generateQR()">Generate QR Code</button>
+
+        <!-- QR Code Display -->
+        <div id="qr-container"></div>
+
+        <!-- Status Display -->
+        <div class="status-box">
+            <h3 id="status">No status received yet.</h3>
+        </div>
+    </div>
+
+    <script>
+        // Generate QR Code
+        function generateQR() {
+            const ssid = $("#ssid").val();
+            const password = $("#password").val();
+
+            if (!ssid || !password) {
+                alert("Please enter both SSID and Password.");
+                return;
+            }
+
+            $.ajax({
+                url: "/generate_qr",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ ssid: ssid, password: password }),
+                success: function(response) {
+                    const qrImage = `<img src="data:image/png;base64,${response.qr_code}" alt="WiFi QR Code">`;
+                    $("#qr-container").html(qrImage);
+                },
+                error: function() {
+                    alert("Failed to generate QR code. Please try again.");
+                }
+            });
+        }
+
+        // Fetch the latest status
+        function fetchStatus() {
+            $.get("/get_status", function(data) {
+                if (data.status) {
+                    $("#status").text(data.status);
+                }
+            });
+        }
+
+        // Update status every 5 seconds
+        setInterval(fetchStatus, 5000);
+    </script>
+</body>
+</html>
